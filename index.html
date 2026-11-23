@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KK Club | Event & Staff Roster</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            kk: {
+              bg: '#0f1115',
+              card: '#161920',
+              cardHover: '#1d212b',
+              border: '#262b36',
+              gold: '#facc15',
+              goldHover: '#eab308',
+              goldMuted: 'rgba(250, 204, 21, 0.12)',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#0f1115] text-gray-100 font-sans antialiased min-h-screen flex flex-col selection:bg-[#facc15] selection:text-black">
+
+  <!-- Toast / Notification Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-30 bg-[#0f1115]/90 backdrop-blur-md border-b border-[#262b36]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-3">
+      <!-- Brand Identity -->
+      <div class="flex items-center gap-3 cursor-pointer" onclick="switchView('front')">
+        <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-[#facc15] to-amber-500 flex items-center justify-center text-black font-extrabold text-lg sm:text-xl shadow-lg shadow-yellow-500/20">
+          KK
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-white">KK CLUB</h1>
+            <span id="view-badge" class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/30">
+              Team Roster
+            </span>
+          </div>
+          <p class="text-xs text-gray-400 hidden sm:block">Event Operations & Staff Deployment</p>
+        </div>
+      </div>
+
+      <!-- Navigation Actions -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Front Page Button (Visible when in Admin Mode) -->
+        <button id="btn-front-view" onclick="switchView('front')" class="hidden items-center gap-2 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-[#161920] hover:bg-[#1d212b] text-gray-200 border border-[#262b36] transition">
+          <i class="fa-solid fa-users text-[#facc15]"></i>
+          <span>Team View</span>
+        </button>
+
+        <!-- Admin Panel Button (Visible when logged in & viewing Front Page) -->
+        <button id="btn-admin-view" onclick="switchView('admin')" class="hidden items-center gap-2 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-[#facc15]/15 hover:bg-[#facc15]/25 text-[#facc15] border border-[#facc15]/40 transition">
+          <i class="fa-solid fa-sliders"></i>
+          <span>Admin Panel</span>
+        </button>
+
+        <!-- Admin Login Button (Visible when logged out) -->
+        <button id="btn-open-login" onclick="openLoginModal()" class="flex items-center gap-2 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#facc15] hover:bg-[#eab308] text-black shadow-md shadow-yellow-500/10 transition">
+          <i class="fa-solid fa-lock"></i>
+          <span>Admin Login</span>
+        </button>
+
+        <!-- Logout Button (Visible when logged in) -->
+        <button id="btn-logout" onclick="handleLogout()" class="hidden items-center gap-2 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 transition">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span class="hidden sm:inline">Logout</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT AREA -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+    <!-- =====================================================================
+         1. FRONT PAGE VIEW (PUBLIC TEAM DASHBOARD)
+         ===================================================================== -->
+    <section id="front-page-view" class="space-y-6">
+      
+      <!-- Top Summary Stats Bar -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- Total Events -->
+        <div class="bg-[#161920] border border-[#262b36] rounded-2xl p-4 sm:p-5 flex items-center justify-between">
+          <div>
+            <p class="text-xs sm:text-sm font-medium text-gray-400">Displayed Events</p>
+            <p id="stat-total-events" class="text-2xl sm:text-3xl font-extrabold text-white mt-1">0</p>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-[#facc15]/10 border border-[#facc15]/20 flex items-center justify-center text-[#facc15] text-xl">
+            <i class="fa-solid fa-calendar-check"></i>
+          </div>
+        </div>
+
+        <!-- Total Guests -->
+        <div class="bg-[#161920] border border-[#262b36] rounded-2xl p-4 sm:p-5 flex items-center justify-between">
+          <div>
+            <p class="text-xs sm:text-sm font-medium text-gray-400">Total Expected Guests</p>
+            <p id="stat-total-guests" class="text-2xl sm:text-3xl font-extrabold text-white mt-1">0</p>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 text-xl">
+            <i class="fa-solid fa-user-group"></i>
+          </div>
+        </div>
+
+        <!-- Total Staff Scheduled -->
+        <div class="bg-[#161920] border border-[#262b36] rounded-2xl p-4 sm:p-5 flex items-center justify-between">
+          <div>
+            <p class="text-xs sm:text-sm font-medium text-gray-400">Total Staff Scheduled</p>
+            <p id="stat-total-staff" class="text-2xl sm:text-3xl font-extrabold text-[#facc15] mt-1">0</p>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-xl">
+            <i class="fa-solid fa-id-badge"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls, Filter Tabs, Date Picker, Search & Share Actions -->
+      <div class="bg-[#161920] border border-[#262b36] rounded-2xl p-4 sm:p-5 space-y-4">
+        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+          
+          <!-- Filter Tabs -->
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 xl:pb-0 no-scrollbar" id="filter-tabs">
+            <button data-filter="all" onclick="setFilter('all')" class="filter-tab px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition bg-[#facc15] text-black">
+              All Events
+            </button>
+            <button data-filter="previous" onclick="setFilter('previous')" class="filter-tab px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition bg-[#0f1115] text-gray-300 hover:text-white border border-[#262b36]">
+              <i class="fa-solid fa-clock-rotate-left text-gray-400 mr-1"></i> Previous Days
+            </button>
+            <button data-filter="today" onclick="setFilter('today')" class="filter-tab px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition bg-[#0f1115] text-gray-300 hover:text-white border border-[#262b36]">
+              Today
+            </button>
+            <button data-filter="upcoming" onclick="setFilter('upcoming')" class="filter-tab px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition bg-[#0f1115] text-gray-300 hover:text-white border border-[#262b36]">
+              Upcoming
+            </button>
+            <button data-filter="Lunch" onclick="setFilter('Lunch')" class="filter-tab px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition bg-[#0f1115] text-gray-300 hover:text-white border border-[#262b36]">
+              <i class="fa-solid fa-sun text-amber-400 mr-1"></i> Lunch
+            </button>
+            <button data-filter="Dinner" onclick="setFilter('Dinner')" class="filter-tab px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition bg-[#0f1115] text-gray-300 hover:text-white border border-[#262b36]">
+              <i class="fa-solid fa-moon text-indigo-400 mr-1"></i> Dinner
+            </button>
+          </div>
+
+          <!-- Jump to Specific Date, Search & Share Buttons -->
+          <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5">
+            <!-- Jump to Specific Date Picker -->
+            <div class="relative flex items-center gap-1.5 bg-[#0f1115] border border-[#262b36] rounded-xl px-3 py-1.5 focus-within:border-[#facc15] transition">
+              <label for="front-date-filter" class="text-xs font-semibold text-gray-400 whitespace-nowrap flex items-center gap-1.5 cursor-pointer">
+                <i class="fa-regular fa-calendar-days text-[#facc15]"></i>
+                <span>Date:</span>
+              </label>
+              <input 
+                type="date" 
+                id="front-date-filter" 
+                onchange="handleFrontDateFilter(this.value)"
+                title="Jump to Specific Date"
+                class="bg-transparent text-xs sm:text-sm text-white focus:outline-none [color-scheme:dark] cursor-pointer"
+              />
+              <button 
+                id="btn-clear-front-date" 
+                type="button"
+                onclick="clearFrontDateFilter()" 
+                title="Clear Date Filter"
+                class="hidden text-gray-400 hover:text-white px-1 text-xs"
+              >
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <!-- Search Input -->
+            <div class="relative flex-1 sm:w-56">
+              <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+              <input 
+                type="text" 
+                id="search-input" 
+                oninput="handleSearch(this.value)"
+                placeholder="Search customer or date..." 
+                class="w-full pl-9 pr-4 py-2 rounded-xl bg-[#0f1115] border border-[#262b36] text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] transition"
+              />
+            </div>
+
+            <!-- Copy Schedule Button -->
+            <button onclick="copyFullSchedule()" class="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-[#0f1115] hover:bg-[#1d212b] border border-[#262b36] text-xs sm:text-sm font-semibold text-gray-200 transition">
+              <i class="fa-regular fa-copy text-[#facc15]"></i>
+              <span>Copy Schedule</span>
+            </button>
+
+            <!-- WhatsApp Share Button -->
+            <button onclick="shareScheduleWhatsApp()" class="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-[#25D366]/15 hover:bg-[#25D366]/25 border border-[#25D366]/40 text-xs sm:text-sm font-semibold text-[#25D366] transition">
+              <i class="fa-brands fa-whatsapp text-base"></i>
+              <span>WhatsApp Team</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Events Roster List / Grid -->
+      <div id="events-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-5">
+        <!-- Event cards will be dynamically rendered here -->
+      </div>
+
+      <!-- Empty State (Shown when no events match filter/search) -->
+      <div id="empty-state" class="hidden bg-[#161920] border border-[#262b36] rounded-2xl p-10 text-center space-y-3">
+        <div class="w-14 h-14 rounded-2xl bg-[#0f1115] border border-[#262b36] flex items-center justify-center text-gray-400 text-2xl mx-auto">
+          <i class="fa-regular fa-calendar-xmark"></i>
+        </div>
+        <h3 class="text-lg font-bold text-white">No Events Found</h3>
+        <p class="text-sm text-gray-400 max-w-md mx-auto">There are no scheduled events matching your current filter, selected date, or search criteria.</p>
+        <button onclick="resetFilters()" class="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#facc15] text-black text-sm font-bold hover:bg-[#eab308] transition">
+          Reset Filters
+        </button>
+      </div>
+    </section>
+
+
+    <!-- =====================================================================
+         2. ADMIN PANEL VIEW (PASSWORD PROTECTED MANAGEMENT)
+         ===================================================================== -->
+    <section id="admin-panel-view" class="hidden space-y-6">
+      
+      <!-- Admin Top Banner -->
+      <div class="bg-[#161920] border border-[#facc15]/30 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <h2 class="text-lg sm:text-xl font-extrabold text-white">Admin Event & Staff Control</h2>
+          </div>
+          <p class="text-xs sm:text-sm text-gray-400 mt-1">Add new bookings, review or update previous days' records, or export/import schedule backups.</p>
+        </div>
+
+        <!-- Backup / Data Controls -->
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="exportJSON()" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#0f1115] hover:bg-[#1d212b] border border-[#262b36] text-xs font-semibold text-gray-200 transition">
+            <i class="fa-solid fa-download text-[#facc15]"></i>
+            <span>Export JSON</span>
+          </button>
+
+          <label class="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#0f1115] hover:bg-[#1d212b] border border-[#262b36] text-xs font-semibold text-gray-200 transition cursor-pointer">
+            <i class="fa-solid fa-upload text-blue-400"></i>
+            <span>Import JSON</span>
+            <input type="file" id="import-json-input" accept=".json" onchange="importJSON(event)" class="hidden" />
+          </label>
+
+          <button onclick="confirmClearSampleOrAll()" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-xs font-semibold text-red-400 transition">
+            <i class="fa-solid fa-trash-can"></i>
+            <span>Clear All Data</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Admin Layout: Left Form + Right Managed Table/List -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Add / Edit Event Form (5 Columns on Desktop) -->
+        <div class="lg:col-span-5 bg-[#161920] border border-[#262b36] rounded-2xl p-5 sm:p-6">
+          <div class="flex items-center justify-between mb-5 pb-3 border-b border-[#262b36]">
+            <h3 id="form-title" class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-plus-circle text-[#facc15]"></i>
+              <span>Add New Event</span>
+            </h3>
+            <button id="btn-cancel-edit" onclick="resetEventForm()" class="hidden text-xs font-semibold text-gray-400 hover:text-white underline">
+              Cancel Edit
+            </button>
+          </div>
+
+          <form id="event-form" onsubmit="handleSaveEvent(event)" class="space-y-4">
+            <input type="hidden" id="edit-event-id" value="" />
+
+            <!-- Date & Shift Row -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label for="input-date" class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">Event Date *</label>
+                <input 
+                  type="date" 
+                  id="input-date" 
+                  required 
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-[#0f1115] border border-[#262b36] text-sm text-white focus:outline-none focus:border-[#facc15] transition [color-scheme:dark]"
+                />
+              </div>
+
+              <div>
+                <label for="input-shift" class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">Shift (Lunch / Dinner) *</label>
+                <select 
+                  id="input-shift" 
+                  required 
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-[#0f1115] border border-[#262b36] text-sm text-white focus:outline-none focus:border-[#facc15] transition"
+                >
+                  <option value="Lunch">☀️ Lunch</option>
+                  <option value="Dinner">🌙 Dinner</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Customer Name -->
+            <div>
+              <label for="input-customer" class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">Customer Name *</label>
+              <input 
+                type="text" 
+                id="input-customer" 
+                required 
+                placeholder="e.g. Mr. Tariq Mehmood / Corporate Gala" 
+                class="w-full px-3.5 py-2.5 rounded-xl bg-[#0f1115] border border-[#262b36] text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] transition"
+              />
+            </div>
+
+            <!-- Total Guests -->
+            <div>
+              <label for="input-guests" class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">Total Guests *</label>
+              <input 
+                type="number" 
+                id="input-guests" 
+                min="0" 
+                required 
+                placeholder="e.g. 250" 
+                class="w-full px-3.5 py-2.5 rounded-xl bg-[#0f1115] border border-[#262b36] text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] transition"
+              />
+            </div>
+
+            <!-- Staff Allocation Section -->
+            <div class="pt-2 border-t border-[#262b36]">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold text-[#facc15] uppercase tracking-wider">Staff Deployment Counts</span>
+                <span class="text-xs font-semibold text-gray-400">Total Staff: <strong id="form-live-staff-total" class="text-white">0</strong></span>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3.5">
+                <!-- Male Waiters -->
+                <div>
+                  <label for="input-male-waiters" class="block text-xs font-medium text-gray-300 mb-1">Male Waiters *</label>
+                  <input 
+                    type="number" 
+                    id="input-male-waiters" 
+                    min="0" 
+                    value="0"
+                    required 
+                    oninput="updateLiveStaffCount()"
+                    class="w-full px-3.5 py-2 rounded-xl bg-[#0f1115] border border-[#262b36] text-sm text-white focus:outline-none focus:border-[#facc15] transition"
+                  />
+                </div>
+
+                <!-- Female Waiters -->
+                <div>
+                  <label for="input-female-waiters" class="block text-xs font-medium text-gray-300 mb-1">Female Waiters *</label>
+                  <input 
+                    type="number" 
+                    id="input-female-waiters" 
+                    min="0" 
+                    value="0"
+                    required 
+                    oninput="updateLiveStaffCount()"
+                    class="w-full px-3.5 py-2 rounded-xl bg-[#0f1115] border border-[#262b36] text-sm text-white focus:outline-none focus:border-[#facc15] transition"
+                  />
+                </div>
+
+                <!-- Dishwashers -->
+                <div>
+                  <label for="input-dishwashers" class="block text-xs font-medium text-gray-300 mb-1">Total Dishwashers *</label>
+                  <input 
+                    type="number" 
+                    id="input-dishwashers" 
+                    min="0" 
+                    value="0"
+                    required 
+                    oninput="updateLiveStaffCount()"
+                    class="w-full px-3.5 py-2 rounded-xl bg-[#0f1115] border border-[#262b36] text-sm text-white focus:outline-none focus:border-[#facc15] transition"
+                  />
+                </div>
+
+                <!-- Sweepers -->
+                <div>
+                  <label for="input-sweepers" class="block text-xs font-medium text-gray-300 mb-1">Total Sweepers *</label>
+                  <input 
+                    type="number" 
+                    id="input-sweepers" 
+                    min="0" 
+                    value="0"
+                    required 
+                    oninput="updateLiveStaffCount()"
+                    class="w-full px-3.5 py-2 rounded-xl bg-[#0f1115] border border-[#262b36] text-sm text-white focus:outline-none focus:border-[#facc15] transition"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="pt-3">
+              <button type="submit" id="btn-submit-event" class="w-full py-3 px-4 rounded-xl bg-[#facc15] hover:bg-[#eab308] text-black font-extrabold text-sm shadow-lg shadow-yellow-500/15 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-check"></i>
+                <span>Save Event to Roster</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Existing Events Management List (7 Columns on Desktop) -->
+        <div class="lg:col-span-7 bg-[#161920] border border-[#262b36] rounded-2xl p-5 sm:p-6 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#262b36]">
+            <h3 class="text-base sm:text-lg font-bold text-white">
+              Scheduled Events (<span id="admin-event-count">0</span>)
+            </h3>
+            <span id="admin-sort-label" class="text-xs text-gray-400">Sorted by Date</span>
+          </div>
+
+          <!-- Admin Filter Tabs & Date Picker -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0f1115] border border-[#262b36] rounded-xl p-3">
+            <!-- Admin Filter Tabs -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar" id="admin-filter-tabs">
+              <button data-admin-filter="all" onclick="setAdminFilter('all')" class="admin-filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition bg-[#facc15] text-black">
+                All
+              </button>
+              <button data-admin-filter="previous" onclick="setAdminFilter('previous')" class="admin-filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition bg-[#161920] text-gray-300 hover:text-white border border-[#262b36]">
+                Previous Days
+              </button>
+              <button data-admin-filter="today" onclick="setAdminFilter('today')" class="admin-filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition bg-[#161920] text-gray-300 hover:text-white border border-[#262b36]">
+                Today
+              </button>
+              <button data-admin-filter="upcoming" onclick="setAdminFilter('upcoming')" class="admin-filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition bg-[#161920] text-gray-300 hover:text-white border border-[#262b36]">
+                Upcoming
+              </button>
+            </div>
+
+            <!-- Admin Date Filter -->
+            <div class="flex items-center gap-1.5 bg-[#161920] border border-[#262b36] rounded-lg px-2.5 py-1.5 focus-within:border-[#facc15] transition self-start sm:self-auto">
+              <label for="admin-date-filter" class="text-xs font-semibold text-gray-400 flex items-center gap-1 cursor-pointer">
+                <i class="fa-regular fa-calendar text-[#facc15]"></i>
+                <span>Date:</span>
+              </label>
+              <input 
+                type="date" 
+                id="admin-date-filter" 
+                onchange="handleAdminDateFilter(this.value)"
+                class="bg-transparent text-xs text-white focus:outline-none [color-scheme:dark] cursor-pointer"
+              />
+              <button 
+                id="btn-clear-admin-date" 
+                type="button"
+                onclick="clearAdminDateFilter()" 
+                title="Clear Date Filter"
+                class="hidden text-gray-400 hover:text-white px-1 text-xs"
+              >
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          </div>
+
+          <div id="admin-events-list" class="space-y-3">
+            <!-- Admin event items rendered dynamically -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-[#262b36] py-5 px-4 text-center text-xs text-gray-500">
+    <p>&copy; <span id="footer-year"></span> KK Club Event & Operations Management. Designed for Team Clarity.</p>
+  </footer>
+
+
+  <!-- =====================================================================
+       MODAL 1: ADMIN LOGIN MODAL
+       ===================================================================== -->
+  <div id="login-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div class="bg-[#161920] border border-[#262b36] rounded-2xl max-w-md w-full p-6 sm:p-7 shadow-2xl relative animate-[fadeIn_0.15s_ease-out]">
+      <button onclick="closeLoginModal()" class="absolute top-4 right-4 w-8 h-8 rounded-lg bg-[#0f1115] text-gray-400 hover:text-white flex items-center justify-center transition">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="w-12 h-12 rounded-xl bg-[#facc15]/15 border border-[#facc15]/30 flex items-center justify-center text-[#facc15] text-xl mb-4">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+
+      <h2 class="text-xl font-extrabold text-white">Admin Panel Login</h2>
+      <p class="text-xs sm:text-sm text-gray-400 mt-1">Enter authorized KK Club credentials to add or update event schedules.</p>
+
+      <!-- Error Alert -->
+      <div id="login-error" class="hidden mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-400 flex items-center gap-2">
+        <i class="fa-solid fa-circle-exclamation text-sm"></i>
+        <span id="login-error-text">Invalid username or password.</span>
+      </div>
+
+      <form onsubmit="handleLogin(event)" class="mt-5 space-y-4">
+        <div>
+          <label for="login-username" class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">Username</label>
+          <input 
+            type="text" 
+            id="login-username" 
+            required 
+            autocomplete="username"
+            placeholder="Enter Username" 
+            class="w-full px-3.5 py-2.5 rounded-xl bg-[#0f1115] border border-[#262b36] text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] transition"
+          />
+        </div>
+
+        <div>
+          <label for="login-password" class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">Password</label>
+          <div class="relative">
+            <input 
+              type="password" 
+              id="login-password" 
+              required 
+              autocomplete="current-password"
+              placeholder="Enter Password" 
+              class="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-[#0f1115] border border-[#262b36] text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#facc15] transition"
+            />
+            <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-sm">
+              <i id="password-eye-icon" class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-3 rounded-xl bg-[#facc15] hover:bg-[#eab308] text-black font-extrabold text-sm shadow-lg shadow-yellow-500/15 transition">
+          Unlock Admin Panel
+        </button>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- =====================================================================
+       MODAL 2: CUSTOM CONFIRMATION DIALOG (Replaces native confirm/alert)
+       ===================================================================== -->
+  <div id="confirm-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div class="bg-[#161920] border border-[#262b36] rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+      <div class="w-11 h-11 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-400 text-lg mb-4">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h3 id="confirm-title" class="text-lg font-bold text-white">Confirm Action</h3>
+      <p id="confirm-message" class="text-sm text-gray-400 mt-1.5">Are you sure you want to proceed?</p>
+      <div class="mt-6 flex items-center justify-end gap-3">
+        <button onclick="closeConfirmModal()" class="px-4 py-2 rounded-xl bg-[#0f1115] hover:bg-[#1d212b] border border-[#262b36] text-xs sm:text-sm font-semibold text-gray-300 transition">
+          Cancel
+        </button>
+        <button id="confirm-action-btn" class="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs sm:text-sm font-bold transition">
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- =====================================================================
+       JAVASCRIPT APPLICATION LOGIC
+       ===================================================================== -->
+  <script>
+    // =========================================================================
+    // CONSTANTS & CREDENTIALS
+    // =========================================================================
+    const ADMIN_CREDENTIALS = {
+      username: 'KK Club',
+      password: 'Kkclub4545'
+    };
+
+    const STORAGE_KEY_EVENTS = 'kk_club_events_v1';
+    const STORAGE_KEY_AUTH = 'kk_club_admin_auth_v1';
+
+    // =========================================================================
+    // APPLICATION STATE
+    // =========================================================================
+    let eventsData = [];
+    let currentFilter = 'all';
+    let frontDateFilter = '';
+    let searchQuery = '';
+    let adminFilter = 'all';
+    let adminDateFilter = '';
+    let isAuthenticated = false;
+    let currentView = 'front'; // 'front' or 'admin'
+    let pendingConfirmCallback = null;
+
+    // =========================================================================
+    // INITIALIZATION
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('footer-year').textContent = new Date().getFullYear();
+      loadAuthState();
+      loadEventsData();
+      setDefaultFormDate();
+      renderAll();
+    });
+
+    /**
+     * Generates a date string in YYYY-MM-DD local format with an optional day offset
+     */
+    function getLocalDateString(offsetDays = 0) {
+      const date = new Date();
+      date.setDate(date.getDate() + offsetDays);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    /**
+     * Loads events from localStorage or seeds realistic sample events across
+     * Previous Days (yesterday & earlier this month), Today, and Upcoming days
+     */
+    function loadEventsData() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY_EVENTS);
+        if (stored !== null) {
+          eventsData = JSON.parse(stored);
+        } else {
+          // Seed initial realistic sample data spanning Previous Days, Today, and Upcoming
+          eventsData = [
+            {
+              id: 'evt_' + Date.now() + '_prev_2',
+              date: getLocalDateString(-5), // 5 Days Ago
+              customerName: 'Peshawar Medical Alumni Annual Dinner',
+              shift: 'Dinner',
+              totalGuests: 280,
+              maleWaiters: 12,
+              femaleWaiters: 5,
+              dishwashers: 4,
+              sweepers: 3
+            },
+            {
+              id: 'evt_' + Date.now() + '_prev_1',
+              date: getLocalDateString(-1), // Yesterday
+              customerName: 'Haji Abdul Rehman & Sons Engagement Lunch',
+              shift: 'Lunch',
+              totalGuests: 220,
+              maleWaiters: 10,
+              femaleWaiters: 4,
+              dishwashers: 4,
+              sweepers: 3
+            },
+            {
+              id: 'evt_' + Date.now() + '_1',
+              date: getLocalDateString(0), // Today
+              customerName: 'Zafarullah Khan & Family (Walima Reception)',
+              shift: 'Dinner',
+              totalGuests: 350,
+              maleWaiters: 14,
+              femaleWaiters: 6,
+              dishwashers: 5,
+              sweepers: 4
+            },
+            {
+              id: 'evt_' + Date.now() + '_2',
+              date: getLocalDateString(1), // Tomorrow
+              customerName: 'Frontier Tech Corporate Summit',
+              shift: 'Lunch',
+              totalGuests: 180,
+              maleWaiters: 8,
+              femaleWaiters: 4,
+              dishwashers: 3,
+              sweepers: 2
+            }
+          ];
+          saveEventsData();
+        }
+      } catch (err) {
+        console.error('Error loading events:', err);
+        eventsData = [];
+      }
+    }
+
+    /**
+     * Persists events array to localStorage
+     */
+    function saveEventsData() {
+      try {
+        localStorage.setItem(STORAGE_KEY_EVENTS, JSON.stringify(eventsData));
+      } catch (err) {
+        showToast('Failed to save data to browser storage.', 'error');
+      }
+    }
+
+    /**
+     * Restores session auth state if user previously logged in
+     */
+    function loadAuthState() {
+      isAuthenticated = sessionStorage.getItem(STORAGE_KEY_AUTH) === 'true';
+      updateHeaderControls();
+    }
+
+    // =========================================================================
+    // VIEW SWITCHING & NAVIGATION
+    // =========================================================================
+    function switchView(view) {
+      if (view === 'admin' && !isAuthenticated) {
+        openLoginModal();
+        return;
+      }
+
+      currentView = view;
+      const frontSection = document.getElementById('front-page-view');
+      const adminSection = document.getElementById('admin-panel-view');
+      const viewBadge = document.getElementById('view-badge');
+
+      if (view === 'admin') {
+        frontSection.classList.add('hidden');
+        adminSection.classList.remove('hidden');
+        viewBadge.textContent = 'Admin Panel';
+        renderAdminEventsList();
+      } else {
+        adminSection.classList.add('hidden');
+        frontSection.classList.remove('hidden');
+        viewBadge.textContent = 'Team Roster';
+        renderFrontPage();
+      }
+
+      updateHeaderControls();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updateHeaderControls() {
+      const btnOpenLogin = document.getElementById('btn-open-login');
+      const btnLogout = document.getElementById('btn-logout');
+      const btnFrontView = document.getElementById('btn-front-view');
+      const btnAdminView = document.getElementById('btn-admin-view');
+
+      if (isAuthenticated) {
+        btnOpenLogin.classList.add('hidden');
+        btnLogout.classList.remove('hidden');
+        btnLogout.classList.add('flex');
+
+        if (currentView === 'admin') {
+          btnFrontView.classList.remove('hidden');
+          btnFrontView.classList.add('flex');
+          btnAdminView.classList.add('hidden');
+          btnAdminView.classList.remove('flex');
+        } else {
+          btnAdminView.classList.remove('hidden');
+          btnAdminView.classList.add('flex');
+          btnFrontView.classList.add('hidden');
+          btnFrontView.classList.remove('flex');
+        }
+      } else {
+        btnOpenLogin.classList.remove('hidden');
+        btnOpenLogin.classList.add('flex');
+        btnLogout.classList.add('hidden');
+        btnLogout.classList.remove('flex');
+        btnFrontView.classList.add('hidden');
+        btnAdminView.classList.add('hidden');
+      }
+    }
+
+    // =========================================================================
+    // AUTHENTICATION HANDLERS
+    // =========================================================================
+    function openLoginModal() {
+      const modal = document.getElementById('login-modal');
+      document.getElementById('login-error').classList.add('hidden');
+      document.getElementById('login-username').value = '';
+      document.getElementById('login-password').value = '';
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      setTimeout(() => document.getElementById('login-username').focus(), 100);
+    }
+
+    function closeLoginModal() {
+      const modal = document.getElementById('login-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function togglePasswordVisibility() {
+      const pwdInput = document.getElementById('login-password');
+      const eyeIcon = document.getElementById('password-eye-icon');
+      if (pwdInput.type === 'password') {
+        pwdInput.type = 'text';
+        eyeIcon.classList.remove('fa-eye');
+        eyeIcon.classList.add('fa-eye-slash');
+      } else {
+        pwdInput.type = 'password';
+        eyeIcon.classList.remove('fa-eye-slash');
+        eyeIcon.classList.add('fa-eye');
+      }
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+      const errorBox = document.getElementById('login-error');
+      const errorText = document.getElementById('login-error-text');
+
+      // Case-sensitive exact credential check
+      if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+        isAuthenticated = true;
+        sessionStorage.setItem(STORAGE_KEY_AUTH, 'true');
+        errorBox.classList.add('hidden');
+        closeLoginModal();
+        showToast('Welcome back, KK Club Admin!', 'success');
+        switchView('admin');
+      } else {
+        errorText.textContent = 'Invalid Username or Password. Please verify case sensitivity.';
+        errorBox.classList.remove('hidden');
+      }
+    }
+
+    function handleLogout() {
+      isAuthenticated = false;
+      sessionStorage.removeItem(STORAGE_KEY_AUTH);
+      showToast('Logged out of Admin Panel.', 'info');
+      switchView('front');
+    }
+
+    // =========================================================================
+    // FORMATTING & HELPERS
+    // =========================================================================
+    function formatDisplayDate(dateStr) {
+      if (!dateStr) return { formatted: 'N/A', dayName: '', relativeTag: '', isPast: false };
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const dateObj = new Date(year, month - 1, day);
+      
+      const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+      const formatted = dateObj.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+
+      const todayStr = getLocalDateString(0);
+      const tomorrowStr = getLocalDateString(1);
+      const yesterdayStr = getLocalDateString(-1);
+      const isPast = dateStr < todayStr;
+
+      let relativeTag = '';
+      if (dateStr === todayStr) relativeTag = 'TODAY';
+      else if (dateStr === tomorrowStr) relativeTag = 'TOMORROW';
+      else if (dateStr === yesterdayStr) relativeTag = 'YESTERDAY';
+
+      return { formatted, dayName, relativeTag, isPast };
+    }
+
+    function calculateTotalStaff(evt) {
+      return (
+        (Number(evt.maleWaiters) || 0) +
+        (Number(evt.femaleWaiters) || 0) +
+        (Number(evt.dishwashers) || 0) +
+        (Number(evt.sweepers) || 0)
+      );
+    }
+
+    /**
+     * Sorts events chronologically ascending by default, or newest-first when viewing Previous Days
+     */
+    function getSortedEvents(list, descending = false) {
+      return [...list].sort((a, b) => {
+        if (a.date !== b.date) {
+          return descending ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date);
+        }
+        // Lunch comes before Dinner on the same day
+        if (a.shift === b.shift) return 0;
+        return a.shift === 'Lunch' ? -1 : 1;
+      });
+    }
+
+    function escapeHTML(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // =========================================================================
+    // FRONT PAGE RENDERING & FILTERING
+    // =========================================================================
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-tab').forEach(btn => {
+        if (btn.dataset.filter === filter) {
+          btn.className = 'filter-tab px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition bg-[#facc15] text-black';
+        } else {
+          btn.className = 'filter-tab px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition bg-[#0f1115] text-gray-300 hover:text-white border border-[#262b36]';
+        }
+      });
+      renderFrontPage();
+    }
+
+    function handleFrontDateFilter(dateVal) {
+      frontDateFilter = dateVal;
+      const clearBtn = document.getElementById('btn-clear-front-date');
+      if (dateVal) {
+        clearBtn.classList.remove('hidden');
+        // Switch tab highlight to 'All Events' when picking a specific date so any date can be inspected
+        if (currentFilter !== 'all') {
+          currentFilter = 'all';
+          document.querySelectorAll('.filter-tab').forEach(btn => {
+            if (btn.dataset.filter === 'all') {
+              btn.className = 'filter-tab px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition bg-[#facc15] text-black';
+            } else {
+              btn.className = 'filter-tab px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition bg-[#0f1115] text-gray-300 hover:text-white border border-[#262b36]';
+            }
+          });
+        }
+      } else {
+        clearBtn.classList.add('hidden');
+      }
+      renderFrontPage();
+    }
+
+    function clearFrontDateFilter() {
+      frontDateFilter = '';
+      document.getElementById('front-date-filter').value = '';
+      document.getElementById('btn-clear-front-date').classList.add('hidden');
+      renderFrontPage();
+    }
+
+    function handleSearch(val) {
+      searchQuery = val.trim().toLowerCase();
+      renderFrontPage();
+    }
+
+    function resetFilters() {
+      searchQuery = '';
+      frontDateFilter = '';
+      document.getElementById('search-input').value = '';
+      document.getElementById('front-date-filter').value = '';
+      document.getElementById('btn-clear-front-date').classList.add('hidden');
+      setFilter('all');
+    }
+
+    function getFilteredEvents() {
+      const todayStr = getLocalDateString(0);
+      // Sort newest-first when viewing Previous Days; otherwise chronological ascending
+      const sorted = getSortedEvents(eventsData, currentFilter === 'previous');
+
+      return sorted.filter(evt => {
+        // Specific Date Picker Filter
+        if (frontDateFilter && evt.date !== frontDateFilter) return false;
+
+        // Tab Filter
+        if (currentFilter === 'previous' && evt.date >= todayStr) return false;
+        if (currentFilter === 'today' && evt.date !== todayStr) return false;
+        if (currentFilter === 'upcoming' && evt.date <= todayStr) return false;
+        if (currentFilter === 'Lunch' && evt.shift !== 'Lunch') return false;
+        if (currentFilter === 'Dinner' && evt.shift !== 'Dinner') return false;
+
+        // Search Query Filter (Customer Name or Date)
+        if (searchQuery) {
+          const { formatted, dayName } = formatDisplayDate(evt.date);
+          const searchableText = `${evt.customerName} ${evt.date} ${formatted} ${dayName} ${evt.shift}`.toLowerCase();
+          if (!searchableText.includes(searchQuery)) return false;
+        }
+
+        return true;
+      });
+    }
+
+    function renderAll() {
+      renderFrontPage();
+      renderAdminEventsList();
+    }
+
+    function renderFrontPage() {
+      const container = document.getElementById('events-container');
+      const emptyState = document.getElementById('empty-state');
+      const filtered = getFilteredEvents();
+
+      // Update Summary Stats
+      let totalGuests = 0;
+      let totalStaff = 0;
+      filtered.forEach(evt => {
+        totalGuests += Number(evt.totalGuests) || 0;
+        totalStaff += calculateTotalStaff(evt);
+      });
+
+      document.getElementById('stat-total-events').textContent = filtered.length;
+      document.getElementById('stat-total-guests').textContent = totalGuests.toLocaleString();
+      document.getElementById('stat-total-staff').textContent = totalStaff.toLocaleString();
+
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      container.innerHTML = filtered.map(evt => {
+        const { formatted, dayName, relativeTag, isPast } = formatDisplayDate(evt.date);
+        const totalEventStaff = calculateTotalStaff(evt);
+        const isLunch = evt.shift === 'Lunch';
+
+        const shiftBadge = isLunch
+          ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+               <i class="fa-solid fa-sun"></i> LUNCH
+             </span>`
+          : `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+               <i class="fa-solid fa-moon"></i> DINNER
+             </span>`;
+
+        const relativeBadge = relativeTag
+          ? `<span class="px-2 py-0.5 rounded-md text-[11px] font-extrabold tracking-wider ${isPast ? 'bg-gray-700 text-gray-200' : 'bg-[#facc15] text-black'}">
+               ${relativeTag}
+             </span>`
+          : '';
+
+        const pastStatusBadge = isPast
+          ? `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold tracking-wider bg-gray-800 text-gray-300 border border-gray-600/60">
+               <i class="fa-solid fa-circle-check text-emerald-400"></i> PAST / COMPLETED
+             </span>`
+          : '';
+
+        return `
+          <article class="bg-[#161920] hover:bg-[#191d26] border ${isPast ? 'border-[#262b36]/80' : 'border-[#262b36]'} rounded-2xl p-5 sm:p-6 transition flex flex-col justify-between gap-5 shadow-lg shadow-black/20">
+            
+            <!-- Card Top: Date & Shift -->
+            <div>
+              <div class="flex flex-wrap items-center justify-between gap-2 pb-3.5 border-b border-[#262b36]">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-10 h-10 rounded-xl bg-[#0f1115] border border-[#262b36] flex items-center justify-center ${isPast ? 'text-gray-400' : 'text-[#facc15]'}">
+                    <i class="fa-regular fa-calendar text-base"></i>
+                  </div>
+                  <div>
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span class="text-sm sm:text-base font-extrabold text-white">${formatted}</span>
+                      ${relativeBadge}
+                      ${pastStatusBadge}
+                    </div>
+                    <p class="text-xs font-medium text-gray-400">${dayName}</p>
+                  </div>
+                </div>
+
+                <div>${shiftBadge}</div>
+              </div>
+
+              <!-- Customer Name & Guest Highlight -->
+              <div class="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Customer Name</span>
+                  <h3 class="text-lg sm:text-xl font-extrabold text-white leading-snug mt-0.5">${escapeHTML(evt.customerName)}</h3>
+                </div>
+
+                <div class="bg-[#0f1115] border border-[#262b36] rounded-xl px-4 py-2.5 flex items-center gap-3 shrink-0">
+                  <div class="w-8 h-8 rounded-lg bg-blue-500/15 text-blue-400 flex items-center justify-center text-sm">
+                    <i class="fa-solid fa-users"></i>
+                  </div>
+                  <div>
+                    <p class="text-[11px] font-semibold text-gray-400 uppercase">Total Guests</p>
+                    <p class="text-lg font-extrabold text-white leading-none mt-0.5">${Number(evt.totalGuests).toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Staff Breakdown Section -->
+            <div class="bg-[#0f1115] border border-[#262b36] rounded-xl p-4">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Staff Breakdown</span>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#facc15]/15 border border-[#facc15]/30 text-xs font-extrabold text-[#facc15]">
+                  <i class="fa-solid fa-people-group"></i>
+                  Total Staff: ${totalEventStaff}
+                </span>
+              </div>
+
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <!-- Male Waiters -->
+                <div class="bg-[#161920] border border-[#262b36] rounded-xl p-2.5 text-center">
+                  <div class="text-xs text-sky-400 mb-1"><i class="fa-solid fa-user-tie"></i></div>
+                  <p class="text-lg font-extrabold text-white leading-none">${evt.maleWaiters}</p>
+                  <p class="text-[11px] font-medium text-gray-400 mt-1">Male Waiters</p>
+                </div>
+
+                <!-- Female Waiters -->
+                <div class="bg-[#161920] border border-[#262b36] rounded-xl p-2.5 text-center">
+                  <div class="text-xs text-pink-400 mb-1"><i class="fa-solid fa-user"></i></div>
+                  <p class="text-lg font-extrabold text-white leading-none">${evt.femaleWaiters}</p>
+                  <p class="text-[11px] font-medium text-gray-400 mt-1">Female Waiters</p>
+                </div>
+
+                <!-- Dishwashers -->
+                <div class="bg-[#161920] border border-[#262b36] rounded-xl p-2.5 text-center">
+                  <div class="text-xs text-emerald-400 mb-1"><i class="fa-solid fa-sink"></i></div>
+                  <p class="text-lg font-extrabold text-white leading-none">${evt.dishwashers}</p>
+                  <p class="text-[11px] font-medium text-gray-400 mt-1">Dishwashers</p>
+                </div>
+
+                <!-- Sweepers -->
+                <div class="bg-[#161920] border border-[#262b36] rounded-xl p-2.5 text-center">
+                  <div class="text-xs text-amber-400 mb-1"><i class="fa-solid fa-broom"></i></div>
+                  <p class="text-lg font-extrabold text-white leading-none">${evt.sweepers}</p>
+                  <p class="text-[11px] font-medium text-gray-400 mt-1">Sweepers</p>
+                </div>
+              </div>
+            </div>
+
+          </article>
+        `;
+      }).join('');
+    }
+
+    // =========================================================================
+    // ADMIN CRUD OPERATIONS & FILTERING
+    // =========================================================================
+    function setDefaultFormDate() {
+      const dateInput = document.getElementById('input-date');
+      if (!dateInput.value) {
+        dateInput.value = getLocalDateString(0);
+      }
+    }
+
+    function setAdminFilter(filter) {
+      adminFilter = filter;
+      document.querySelectorAll('.admin-filter-tab').forEach(btn => {
+        if (btn.dataset.adminFilter === filter) {
+          btn.className = 'admin-filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition bg-[#facc15] text-black';
+        } else {
+          btn.className = 'admin-filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition bg-[#161920] text-gray-300 hover:text-white border border-[#262b36]';
+        }
+      });
+      renderAdminEventsList();
+    }
+
+    function handleAdminDateFilter(dateVal) {
+      adminDateFilter = dateVal;
+      const clearBtn = document.getElementById('btn-clear-admin-date');
+      if (dateVal) {
+        clearBtn.classList.remove('hidden');
+        if (adminFilter !== 'all') {
+          adminFilter = 'all';
+          document.querySelectorAll('.admin-filter-tab').forEach(btn => {
+            if (btn.dataset.adminFilter === 'all') {
+              btn.className = 'admin-filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition bg-[#facc15] text-black';
+            } else {
+              btn.className = 'admin-filter-tab px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition bg-[#161920] text-gray-300 hover:text-white border border-[#262b36]';
+            }
+          });
+        }
+      } else {
+        clearBtn.classList.add('hidden');
+      }
+      renderAdminEventsList();
+    }
+
+    function clearAdminDateFilter() {
+      adminDateFilter = '';
+      document.getElementById('admin-date-filter').value = '';
+      document.getElementById('btn-clear-admin-date').classList.add('hidden');
+      renderAdminEventsList();
+    }
+
+    function updateLiveStaffCount() {
+      const m = Number(document.getElementById('input-male-waiters').value) || 0;
+      const f = Number(document.getElementById('input-female-waiters').value) || 0;
+      const d = Number(document.getElementById('input-dishwashers').value) || 0;
+      const s = Number(document.getElementById('input-sweepers').value) || 0;
+      document.getElementById('form-live-staff-total').textContent = m + f + d + s;
+    }
+
+    function handleSaveEvent(e) {
+      e.preventDefault();
+      if (!isAuthenticated) return;
+
+      const editId = document.getElementById('edit-event-id').value;
+      const eventRecord = {
+        id: editId ? editId : 'evt_' + Date.now(),
+        date: document.getElementById('input-date').value,
+        customerName: document.getElementById('input-customer').value.trim(),
+        shift: document.getElementById('input-shift').value,
+        totalGuests: Math.max(0, parseInt(document.getElementById('input-guests').value, 10) || 0),
+        maleWaiters: Math.max(0, parseInt(document.getElementById('input-male-waiters').value, 10) || 0),
+        femaleWaiters: Math.max(0, parseInt(document.getElementById('input-female-waiters').value, 10) || 0),
+        dishwashers: Math.max(0, parseInt(document.getElementById('input-dishwashers').value, 10) || 0),
+        sweepers: Math.max(0, parseInt(document.getElementById('input-sweepers').value, 10) || 0),
+      };
+
+      if (editId) {
+        const idx = eventsData.findIndex(item => item.id === editId);
+        if (idx !== -1) {
+          eventsData[idx] = eventRecord;
+          showToast('Event updated successfully!', 'success');
+        }
+      } else {
+        eventsData.push(eventRecord);
+        showToast('New event added to KK Club roster!', 'success');
+      }
+
+      saveEventsData();
+      resetEventForm();
+      renderAll();
+    }
+
+    function editEvent(id) {
+      const evt = eventsData.find(item => item.id === id);
+      if (!evt) return;
+
+      document.getElementById('edit-event-id').value = evt.id;
+      document.getElementById('input-date').value = evt.date;
+      document.getElementById('input-shift').value = evt.shift;
+      document.getElementById('input-customer').value = evt.customerName;
+      document.getElementById('input-guests').value = evt.totalGuests;
+      document.getElementById('input-male-waiters').value = evt.maleWaiters;
+      document.getElementById('input-female-waiters').value = evt.femaleWaiters;
+      document.getElementById('input-dishwashers').value = evt.dishwashers;
+      document.getElementById('input-sweepers').value = evt.sweepers;
+
+      updateLiveStaffCount();
+
+      document.getElementById('form-title').innerHTML = `
+        <i class="fa-solid fa-pen-to-square text-[#facc15]"></i>
+        <span>Update Event</span>
+      `;
+      document.getElementById('btn-submit-event').innerHTML = `
+        <i class="fa-solid fa-floppy-disk"></i>
+        <span>Update Event Details</span>
+      `;
+      document.getElementById('btn-cancel-edit').classList.remove('hidden');
+
+      // Scroll smoothly to form on mobile
+      document.getElementById('event-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function resetEventForm() {
+      document.getElementById('event-form').reset();
+      document.getElementById('edit-event-id').value = '';
+      setDefaultFormDate();
+      document.getElementById('input-male-waiters').value = 0;
+      document.getElementById('input-female-waiters').value = 0;
+      document.getElementById('input-dishwashers').value = 0;
+      document.getElementById('input-sweepers').value = 0;
+      updateLiveStaffCount();
+
+      document.getElementById('form-title').innerHTML = `
+        <i class="fa-solid fa-plus-circle text-[#facc15]"></i>
+        <span>Add New Event</span>
+      `;
+      document.getElementById('btn-submit-event').innerHTML = `
+        <i class="fa-solid fa-check"></i>
+        <span>Save Event to Roster</span>
+      `;
+      document.getElementById('btn-cancel-edit').classList.add('hidden');
+    }
+
+    function requestDeleteEvent(id) {
+      const evt = eventsData.find(item => item.id === id);
+      if (!evt) return;
+
+      openConfirmModal(
+        'Delete Event',
+        `Are you sure you want to remove "${evt.customerName}" (${evt.date}) from the schedule?`,
+        () => {
+          eventsData = eventsData.filter(item => item.id !== id);
+          saveEventsData();
+          if (document.getElementById('edit-event-id').value === id) {
+            resetEventForm();
+          }
+          renderAll();
+          showToast('Event deleted.', 'info');
+        }
+      );
+    }
+
+    function confirmClearSampleOrAll() {
+      openConfirmModal(
+        'Clear All Events',
+        'This will delete all scheduled events from this device. Make sure you have exported a JSON backup if needed.',
+        () => {
+          eventsData = [];
+          saveEventsData();
+          resetEventForm();
+          renderAll();
+          showToast('All event records cleared.', 'info');
+        }
+      );
+    }
+
+    function renderAdminEventsList() {
+      const container = document.getElementById('admin-events-list');
+      const countBadge = document.getElementById('admin-event-count');
+      const sortLabel = document.getElementById('admin-sort-label');
+      const todayStr = getLocalDateString(0);
+
+      const isPreviousView = adminFilter === 'previous';
+      sortLabel.textContent = isPreviousView ? 'Sorted Newest First' : 'Sorted by Date';
+
+      const sorted = getSortedEvents(eventsData, isPreviousView);
+      const filteredAdmin = sorted.filter(evt => {
+        if (adminDateFilter && evt.date !== adminDateFilter) return false;
+        if (adminFilter === 'previous' && evt.date >= todayStr) return false;
+        if (adminFilter === 'today' && evt.date !== todayStr) return false;
+        if (adminFilter === 'upcoming' && evt.date <= todayStr) return false;
+        return true;
+      });
+
+      countBadge.textContent = filteredAdmin.length;
+
+      if (filteredAdmin.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-10 px-4 bg-[#0f1115] border border-[#262b36] rounded-xl">
+            <p class="text-sm font-semibold text-gray-300">No events found for this filter.</p>
+            <p class="text-xs text-gray-500 mt-1">Switch filter tabs, clear the selected date, or add a new KK Club event.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filteredAdmin.map(evt => {
+        const { formatted, dayName, isPast } = formatDisplayDate(evt.date);
+        const totalStaff = calculateTotalStaff(evt);
+        const isLunch = evt.shift === 'Lunch';
+
+        const pastBadge = isPast
+          ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-800 text-gray-300 border border-gray-600/60">PAST / COMPLETED</span>`
+          : '';
+
+        return `
+          <div class="bg-[#0f1115] border border-[#262b36] hover:border-gray-700 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition">
+            <div class="space-y-1.5">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs font-bold ${isPast ? 'text-gray-300' : 'text-[#facc15]'}">${formatted} (${dayName.slice(0, 3)})</span>
+                <span class="px-2 py-0.5 rounded text-[11px] font-bold ${isLunch ? 'bg-amber-500/15 text-amber-300' : 'bg-indigo-500/15 text-indigo-300'}">
+                  ${evt.shift}
+                </span>
+                ${pastBadge}
+                <span class="text-xs text-gray-400">• ${evt.totalGuests} Guests</span>
+              </div>
+              <h4 class="text-sm sm:text-base font-bold text-white">${escapeHTML(evt.customerName)}</h4>
+              <p class="text-xs text-gray-400">
+                Staff: <strong class="text-gray-200">${totalStaff}</strong> 
+                (M: ${evt.maleWaiters}, F: ${evt.femaleWaiters}, DW: ${evt.dishwashers}, SW: ${evt.sweepers})
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+              <button onclick="editEvent('${evt.id}')" class="px-3 py-2 rounded-lg bg-[#161920] hover:bg-[#facc15] text-gray-200 hover:text-black border border-[#262b36] text-xs font-bold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-pen"></i>
+                <span>Edit</span>
+              </button>
+              <button onclick="requestDeleteEvent('${evt.id}')" class="px-3 py-2 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/30 text-xs font-bold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-trash"></i>
+                <span>Delete</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // =========================================================================
+    // SHARE & EXPORT / IMPORT UTILITIES
+    // =========================================================================
+    function buildScheduleSummaryText() {
+      const filtered = getFilteredEvents();
+      if (filtered.length === 0) return '';
+
+      let lines = ['*KK CLUB - TEAM EVENT ROSTER*', '========================'];
+      filtered.forEach((evt, idx) => {
+        const { formatted, dayName, isPast } = formatDisplayDate(evt.date);
+        const totalStaff = calculateTotalStaff(evt);
+        const statusSuffix = isPast ? ' [COMPLETED]' : '';
+        lines.push(
+          `\n*${idx + 1}. ${evt.customerName}*${statusSuffix}`,
+          `📅 Date: ${formatted} (${dayName})`,
+          `🍽️ Shift: ${evt.shift} | Guests: ${evt.totalGuests}`,
+          `👥 Total Staff: ${totalStaff} (Male Waiters: ${evt.maleWaiters}, Female Waiters: ${evt.femaleWaiters}, Dishwashers: ${evt.dishwashers}, Sweepers: ${evt.sweepers})`
+        );
+      });
+      return lines.join('\n');
+    }
+
+    function copyFullSchedule() {
+      const text = buildScheduleSummaryText();
+      if (!text) {
+        showToast('No events available to copy.', 'error');
+        return;
+      }
+
+      // Use fallback textarea + execCommand for reliable iframe compatibility
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        showToast('Team schedule copied to clipboard!', 'success');
+      } catch (err) {
+        showToast('Unable to copy schedule.', 'error');
+      }
+      document.body.removeChild(textarea);
+    }
+
+    function shareScheduleWhatsApp() {
+      const text = buildScheduleSummaryText();
+      if (!text) {
+        showToast('No events available to share.', 'error');
+        return;
+      }
+      const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+
+    function exportJSON() {
+      const dataStr = JSON.stringify(eventsData, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `KK-Club-Schedule-${getLocalDateString(0)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Schedule exported as JSON backup.', 'success');
+    }
+
+    function importJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (!Array.isArray(parsed)) throw new Error('Invalid file format');
+          
+          // Validate and normalize imported records
+          const validRecords = parsed.map((item, index) => ({
+            id: item.id || `evt_imp_${Date.now()}_${index}`,
+            date: String(item.date || getLocalDateString(0)),
+            customerName: String(item.customerName || 'Unnamed Event'),
+            shift: item.shift === 'Lunch' ? 'Lunch' : 'Dinner',
+            totalGuests: Number(item.totalGuests) || 0,
+            maleWaiters: Number(item.maleWaiters) || 0,
+            femaleWaiters: Number(item.femaleWaiters) || 0,
+            dishwashers: Number(item.dishwashers) || 0,
+            sweepers: Number(item.sweepers) || 0
+          }));
+
+          eventsData = validRecords;
+          saveEventsData();
+          renderAll();
+          showToast(`Successfully imported ${validRecords.length} events!`, 'success');
+        } catch (err) {
+          showToast('Invalid JSON backup file.', 'error');
+        }
+        event.target.value = '';
+      };
+      reader.readAsText(file);
+    }
+
+    // =========================================================================
+    // CUSTOM CONFIRMATION MODAL & TOASTS
+    // =========================================================================
+    function openConfirmModal(title, message, onConfirm) {
+      document.getElementById('confirm-title').textContent = title;
+      document.getElementById('confirm-message').textContent = message;
+      pendingConfirmCallback = onConfirm;
+
+      const modal = document.getElementById('confirm-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeConfirmModal() {
+      const modal = document.getElementById('confirm-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      pendingConfirmCallback = null;
+    }
+
+    document.getElementById('confirm-action-btn').addEventListener('click', () => {
+      if (typeof pendingConfirmCallback === 'function') {
+        pendingConfirmCallback();
+      }
+      closeConfirmModal();
+    });
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+
+      const styles = {
+        success: 'bg-[#161920] border-emerald-500/40 text-emerald-300',
+        error: 'bg-[#161920] border-red-500/40 text-red-300',
+        info: 'bg-[#161920] border-[#facc15]/40 text-[#facc15]'
+      };
+
+      const icons = {
+        success: 'fa-circle-check',
+        error: 'fa-circle-exclamation',
+        info: 'fa-circle-info'
+      };
+
+      toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border shadow-xl text-xs sm:text-sm font-semibold transition-all duration-300 ${styles[type] || styles.info}`;
+      toast.innerHTML = `
+        <i class="fa-solid ${icons[type] || icons.info} text-base"></i>
+        <span>${escapeHTML(message)}</span>
+      `;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(8px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3200);
+    }
+  </script>
+</body>
+</html>
